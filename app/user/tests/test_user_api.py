@@ -18,7 +18,7 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
-class PublicUserApiTest(TestCase):
+class PublicUserApiTests(TestCase):
     """Test the public features of the user API."""
 
     def setUp(self):
@@ -85,7 +85,7 @@ class PublicUserApiTest(TestCase):
         self.assertIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    def test_create_token_bad_credentails(self):
+    def test_create_token_bad_credentials(self):
         """Test returns erros if credentials invalis."""
         create_user(email='test@example.com', password='goodpass')
 
@@ -95,7 +95,15 @@ class PublicUserApiTest(TestCase):
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_token_black_password(self):
+    def test_create_token_email_not_found(self):
+        """Test error returned if user not found for given email."""
+        payload = {'email': 'test@example.com', 'password': 'pass123'}
+        res = self.client.post(TOKEN_URL, payload)
+
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_token_blank_password(self):
         """Test posting a blank password return an error."""
         payload = {'email': 'test@example.com', 'password': ''}
         res = self.client.post(TOKEN_URL, payload)
@@ -107,7 +115,7 @@ class PublicUserApiTest(TestCase):
         """Test authentication is required for users."""
         res = self.client.get(ME_URL)
 
-        self.assertEqual(res.status_code, status.HTTP_101_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class PrivateUserApiTests(TestCase):
@@ -133,7 +141,7 @@ class PrivateUserApiTests(TestCase):
             'email': self.user.email,
         })
 
-    def test_post_me_not_allowes(self):
+    def test_post_me_not_allowed(self):
         """Test POST is not allowed for the_me endpoint."""
         res = self.client.post(ME_URL, {})
 
